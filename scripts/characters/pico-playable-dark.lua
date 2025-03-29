@@ -43,6 +43,11 @@ function onUpdatePost(elapsed)
     if getObjectOrder(characterType..'Light') ~= getObjectOrder(characterType..'Group') - 1 then
         setObjectOrder(characterType..'Light', getObjectOrder(characterType..'Group'))
     end
+    if getProperty(characterType..'.alpha') < 1 then
+        setProperty(characterType..'Light.alpha', 1)
+    else
+        setProperty(characterType..'Light.alpha', 0)
+    end
     playAnim(characterType..'Light', getProperty(characterType..'.animation.name'), true, getProperty(characterType..'.animation.curAnim.reversed'), getProperty(characterType..'.animation.curAnim.curFrame'))
 end
 

@@ -108,18 +108,17 @@ function onUpdatePost(elapsed)
             if propertyTracker[property][2] ~= getProperty(characterType..'.'..propertyTracker[property][1]) then
                 propertyTracker[property][2] = getProperty(characterType..'.'..propertyTracker[property][1])
             
-                local propName = propertyTracker[property][1]
+                local propertyName = propertyTracker[property][1]
             
                 -- Skip alpha update if stage is spookyErect
-                if propName == 'alpha' and string.lower(curStage) == 'spookyerect' then
+                if propertyName == 'alpha' and string.lower(curStage) == 'spookyerect' then
                     -- do nothing
                 elseif property < 3 then
-                    setProperty('speaker.'..propName, propertyTracker[property][2] + offsetData[property])
+                    setProperty('speaker.'..propertyName, propertyTracker[property][2] + offsetData[property])
                 else
-                    setProperty('speaker.'..propName, propertyTracker[property][2])
+                    setProperty('speaker.'..propertyName, propertyTracker[property][2])
                 end
-            end
-            
+            end            
         end
     end
     if characterType ~= '' then
