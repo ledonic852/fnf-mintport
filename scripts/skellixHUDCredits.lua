@@ -1,5 +1,7 @@
---script ripped from skellix's hud script [https://gamebanana.com/mods/534209]
---please credit skellix when using this, and preferrably me too [bobbyDX]
+-- script ripped from skellix's hud script [https://gamebanana.com/mods/534209]
+-- please credit skellix when using this, and preferrably me too [bobbyDX]
+
+-- update from skellix since i found this engine lol, credit both me and bobbyDX if you're gonna use this :3
 
 local creditsActive = true
 
@@ -19,11 +21,10 @@ function onCreatePost()
         setTextSize('songNameCredit', 45)
 
         --Get Credits Info
-        coolPeople = 'idk'
-        if string.lower(difficultyName) == 'normal' then
-            coolPeople = parseString(getTextFromFile('data/songs/'..songPath..'/credits/credits.txt'), '%s')
+        if checkFileExists('data/songs/'..songPath..'.json') then
+            getNewCredits()
         else
-            coolPeople = parseString(getTextFromFile('data/songs/'..songPath..'/credits/credits-'..string.lower(string.gsub(difficultyName, "%s+", "-"))..'.txt'), '%s')
+            handleOldCredits()
         end
 
         makeLuaText('credit', 'Composer: '..string.gsub(coolPeople[1], "_", " ")
@@ -97,5 +98,31 @@ function setToCam(sprite,cam)
         setProperty(sprite..'.camera',instanceArg(cam), false, true)
     else
         setObjectCamera(sprite,cam)
+    end
+end
+
+function handleOldCredits()
+    coolPeople = 'idk'
+    if string.lower(difficultyName) == 'normal' then
+        coolPeople = parseString(getTextFromFile('data/songCredits/'..songPath..'/credits.txt'), '%s')
+    else
+        coolPeople = parseString(getTextFromFile('data/songCredits/'..songPath..'/credits-'..string.lower(string.gsub(difficultyName, "%s+", "-"))..'.txt'), '%s')
+    end
+end
+
+function getNewCredits()
+    coolPeople = 'idk'
+    newCreditsData = callMethodFromClass('tjson.TJSON', 'parse', {getTextFromFile('data/songCredits/'..songPath..'.json')})
+
+    if newCreditsData.changeCreditsByDifficulty == true then
+        for i = 1, #newCreditsData.data do
+            if newCreditsData.data[i].difficulty == difficultyName then
+                coolPeople = {newCreditsData.data[i].composer, newCreditsData.data[i].charter}
+            elseif i == #newCreditsData.data and coolPeople == 'idk' then
+                coolPeople = {newCreditsData.defaultComposer, newCreditsData.defaultCharter}
+            end
+        end
+    else
+        coolPeople = {newCreditsData.defaultComposer, newCreditsData.defaultCharter}
     end
 end
