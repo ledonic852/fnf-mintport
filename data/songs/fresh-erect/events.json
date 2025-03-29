@@ -151,7 +151,7 @@
 				[
 					[
 						"Set Camera Target",
-						"GF,-100",
+						"GF,-30,50",
 						"32,expoOut"
 					],
 					[
@@ -196,7 +196,7 @@
 				[
 					[
 						"Set Camera Target",
-						"GF,-100",
+						"GF,-30,50",
 						"32,expoOut"
 					],
 					[
@@ -391,7 +391,7 @@
 				[
 					[
 						"Set Camera Target",
-						"GF,-100",
+						"GF,-30,50",
 						"32,expoOut"
 					],
 					[
@@ -416,7 +416,7 @@
 				[
 					[
 						"Set Camera Target",
-						"GF,-100",
+						"GF,-30,50",
 						"32,expoOut"
 					]
 				]
