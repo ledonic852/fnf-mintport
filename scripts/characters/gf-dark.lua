@@ -38,29 +38,29 @@ end
 
 function onUpdatePost(elapsed)
     for property = 1, #propertyTracker do
-        local propName = propertyTracker[property][1]
-        local currentValue = getProperty(characterType..'.'..propName)
+        local propertyName = propertyTracker[property][1]
+        local currentValue = getProperty(characterType..'.'..propertyName)
 
         if propertyTracker[property][2] ~= currentValue then
             propertyTracker[property][2] = currentValue
 
-            -- Add +225 if x
-            if propName == 'x' then
-                setProperty(characterType..'Light.x', currentValue + 225)
-
-            -- Skip alpha if stage is spookyErect
-            elseif propName == 'alpha' and curStage == 'spookyErect' then
-                -- Do nothing (skip syncing alpha)
-
-            -- Sync everything else
+            if propertyName == 'x' then
+                -- Adds 230 to the X position.
+                setProperty(characterType..'Light.x', currentValue + 230)
             else
-                setProperty(characterType..'Light.'..propName, currentValue)
+                -- Sync everything else
+                setProperty(characterType..'Light.'..propertyName, currentValue)
             end
         end
     end
 
     if getObjectOrder(characterType..'Light') ~= getObjectOrder(characterType..'Group') - 1 then
         setObjectOrder(characterType..'Light', getObjectOrder(characterType..'Group'))
+    end
+    if getProperty(characterType..'.alpha') < 1 then
+        setProperty(characterType..'Light.alpha', 1)
+    else
+        setProperty(characterType..'Light.alpha', 0)
     end
 
     playAnim(characterType..'Light',
@@ -70,7 +70,6 @@ function onUpdatePost(elapsed)
         getProperty(characterType..'.animation.curAnim.curFrame')
     )
 end
-
 
 function getCharacterType(characterName)
     if boyfriendName == characterName then

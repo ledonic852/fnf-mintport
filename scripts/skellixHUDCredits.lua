@@ -21,7 +21,7 @@ function onCreatePost()
         setTextSize('songNameCredit', 45)
 
         --Get Credits Info
-        if checkFileExists('data/songs/'..songPath..'.json') then
+        if checkFileExists('data/songCredits/'..songPath..'.json') then
             getNewCredits()
         else
             handleOldCredits()
@@ -104,9 +104,9 @@ end
 function handleOldCredits()
     coolPeople = 'idk'
     if string.lower(difficultyName) == 'normal' then
-        coolPeople = parseString(getTextFromFile('data/songCredits/'..songPath..'/credits.txt'), '%s')
+        coolPeople = parseString(getTextFromFile('data/songs/'..songPath..'/credits.txt'), '%s')
     else
-        coolPeople = parseString(getTextFromFile('data/songCredits/'..songPath..'/credits-'..string.lower(string.gsub(difficultyName, "%s+", "-"))..'.txt'), '%s')
+        coolPeople = parseString(getTextFromFile('data/songs/'..songPath..'/credits-'..string.lower(string.gsub(difficultyName, "%s+", "-"))..'.txt'), '%s')
     end
 end
 

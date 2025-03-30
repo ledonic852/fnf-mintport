@@ -144,14 +144,14 @@
 			"fps": 24,
 			"name": "tankman beat it",
 			"loop": false,
-			"anim": "beat it"
+			"anim": "beatIT"
 		},
 		{
 			"offsets": [52, -6],
 			"fps": 24,
 			"name": "tankman ARGH",
 			"loop": false,
-			"anim": "augh"
+			"anim": "argh"
 		}
 	],
 	"no_antialiasing": false,

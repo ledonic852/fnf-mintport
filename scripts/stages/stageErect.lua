@@ -69,3 +69,16 @@ function onCreatePost()
 		setShaderFloat('gf', 'brightness', -30)
 	end
 end
+
+-- Extra stuff for when the event happens.
+function onEvent(event, value1, value2, strumTime)
+	if event == 'Dadbattle Spotlight' then
+		if value1 == '1' then
+			setProperty('smallLight.visible', false)
+			setProperty('light.visible', false)
+		elseif value1 == '0' then
+			setProperty('smallLight.visible', true)
+			setProperty('light.visible', true)
+		end
+	end
+end

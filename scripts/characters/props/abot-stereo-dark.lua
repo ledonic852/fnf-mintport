@@ -5,11 +5,9 @@ local offsetData = {0, 0}
 local propertyTracker = {
     {'x', nil},
     {'y', nil},
-    {'color', nil},
     {'scrollFactor.x', nil},
     {'scrollFactor.y', nil},
     {'angle', nil},
-    {'alpha', nil},
     {'antialiasing', nil},
     {'visible', nil}
 }
@@ -31,7 +29,9 @@ function createSpeaker(attachedCharacter, offsetX, offsetY)
         setObjectOrder('AbotSpeakerDarkBG', getObjectOrder(characterType..'Group'))
     end
     addLuaSprite('AbotSpeakerDarkBG')
+    setProperty('AbotSpeakerDarkBG.color', 0x616785)
 
+    initLuaShader('adjustColor')
     for bar = 1, 7 do
         makeAnimatedLuaSprite('AbotSpeakerDarkVisualizer'..bar, 'abot/aBotViz')
         addAnimationByPrefix('AbotSpeakerDarkVisualizer'..bar, 'idle', 'viz'..bar, 24, false)
@@ -48,11 +48,12 @@ function createSpeaker(attachedCharacter, offsetX, offsetY)
     end
 
     makeLuaSprite('AbotEyesDark')
-    makeGraphic('AbotEyesDark', 140, 60, '6F96CE')
+    makeGraphic('AbotEyesDark', 140, 60)
     if characterType ~= '' then
         setObjectOrder('AbotEyesDark', getObjectOrder(characterType..'Group'))
     end
     addLuaSprite('AbotEyesDark')
+    setProperty('AbotEyesDark.color', 0x6F96CE)
 
     makeFlxAnimateSprite('AbotPupilsDark')
     loadAnimateAtlas('AbotPupilsDark', 'abot/systemEyes')
@@ -71,11 +72,16 @@ function createSpeaker(attachedCharacter, offsetX, offsetY)
     end
     
     makeFlxAnimateSprite('AbotSpeakerDark')
-    loadAnimateAtlas('AbotSpeakerDark', 'abot/dark/abotSystem')
+    loadAnimateAtlas('AbotSpeakerDark', 'abot/abotSystem')
     if characterType ~= '' then
         setObjectOrder('AbotSpeakerDark', getObjectOrder(characterType..'Group'))
     end
     addLuaSprite('AbotSpeakerDark')
+
+    initLuaShader('textureSwap')
+    setSpriteShader('AbotSpeakerDark', 'textureSwap')
+    setShaderSampler2D('AbotSpeakerDark', 'image', 'abot/dark/abotSystem/spritemap1')
+    setShaderFloat('AbotSpeakerDark', 'fadeAmount', 1)
 
     for property = 1, 2 do
         if characterType ~= '' then
@@ -96,17 +102,12 @@ end
 
 -- Self explanatory again.
 function destroySpeaker()
-    runHaxeCode([[
-        game.variables.get('AbotSpeakerDark').destroy();
-        game.variables.remove('AbotSpeakerDark');
-        game.variables.get('AbotPupilsDark').destroy();
-        game.variables.remove('AbotPupilsDark');
-    ]])
-    removeLuaSprite('AbotSpeakerDarkBG')
-    for bar = 1, 7 do
-        removeLuaSprite('AbotSpeakerDarkVisualizer'..bar)
+    for _, object in ipairs({'AbotSpeakerDark', 'AbotSpeakerDarkBG', 'AbotPupilsDark', 'AbotEyesDark'}) do
+        setProperty(object..'.visible', false)
     end
-    removeLuaSprite('AbotEyesDark')
+    for bar = 1, 7 do
+        setProperty('AbotSpeakerDarkVisualizer'..bar..'.visible', false)
+    end
 end
 
 -- This is to prevent the speaker from still appearing when the attached character's gone.
@@ -116,6 +117,22 @@ function onEvent(eventName, value1, value2, strumTime)
             destroySpeaker()
         elseif characterName ~= '' then
             createSpeaker(characterName, offsetData[1], offsetData[2])
+        end
+    end
+    if eventName == 'Set Camera Target' then
+        for _, startStringBF in ipairs({'0', 'bf', 'boyfriend'}) do
+            if stringStartsWith(string.lower(value1), startStringBF) then
+                if looksAtPlayer == false then
+                    playAnim('AbotPupilsDark', '', true, false, 17)
+                end
+            end
+        end
+        for _, startStringDad in ipairs({'1', 'dad', 'opponent'}) do
+            if stringStartsWith(string.lower(value1), startStringDad) then
+                if looksAtPlayer == true then
+                    playAnim('AbotPupilsDark', '', true, false, 0)
+                end
+            end
         end
     end
 end
@@ -189,6 +206,9 @@ function onUpdatePost(elapsed)
             setAbotSpeakerDarkProperty(propertyTracker[property][1], propertyTracker[property][2])
         end
     end
+    if characterType ~= '' then
+        translateAlpha(getProperty(characterType..'.alpha'))
+    end
     
     --[[
         These make it so the animations stop when they're supposed to be,
@@ -212,6 +232,19 @@ function onUpdatePost(elapsed)
     -- This is how we control the animations' speed depending on the 'playbackRate' for Atlas Sprites.
     setProperty('AbotSpeakerDark.anim.framerate', 24 * playbackRate)
     setProperty('AbotPupilsDark.anim.framerate', 24 * playbackRate)
+end
+
+function translateAlpha(value)
+    setShaderFloat('AbotSpeakerDark', 'fadeAmount', value)
+    for bar = 1, 7 do
+        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'hue', interpolateFloat(0, -26, value))
+        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'saturation', interpolateFloat(0, -45, value))
+        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'contrast', interpolateFloat(0, 0, value))
+        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'brightness', interpolateFloat(0, -12, value))
+    end
+
+    setProperty('AbotSpeakerDarkBG.color', interpolateColor(0xFFFFFF, 0x616785, value))
+    setProperty('AbotEyesDark.color', interpolateColor(0xFFFFFF, 0x6F96CE, value))
 end
 
 --[[
@@ -320,6 +353,26 @@ function visualizerOffsetY(bar)
         i = i + 1
     end
     return offsetY
+end
+
+function interpolateColor(color1, color2, factor)
+    redColor1 = color1 / (16^4)
+    greenColor1 = (redColor1 - math.floor(redColor1)) * 256
+    blueColor1 = (greenColor1 - math.floor(greenColor1)) * 256
+
+    redColor2 = color2 / (16^4)
+    greenColor2 = (redColor2 - math.floor(redColor2)) * 256
+    blueColor2 = (greenColor2 - math.floor(greenColor2)) * 256
+
+    targetRed = (math.floor(redColor2) - math.floor(redColor1)) * factor + math.floor(redColor1)
+    targetGreen = (math.floor(greenColor2) - math.floor(greenColor1)) * factor + math.floor(greenColor1)
+    targetBlue = (math.floor(blueColor2) - math.floor(blueColor1)) * factor + math.floor(blueColor1)
+    
+    return math.floor(targetRed) * 16^4 + math.floor(targetGreen) * 16^2 + math.floor(targetBlue)
+end
+
+function interpolateFloat(value1, value2, factor)
+    return (value2 - value1) * factor + value1
 end
 
 function pauseAnim(object)

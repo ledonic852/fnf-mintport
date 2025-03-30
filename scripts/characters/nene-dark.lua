@@ -24,6 +24,7 @@ local propertyTracker = {
 }
 
 function onCreate()
+    addLuaScript('characters/nene')
 end
 
 function onCreatePost()
@@ -35,12 +36,8 @@ function onCreatePost()
     createInstance(characterType..'Light', 'objects.Character', {characterPos.x, characterPos.y, characterName:gsub('-dark', ''), isPlayer})
     setObjectOrder(characterType..'Light', getObjectOrder(characterType..'Group'))
     addInstance(characterType..'Light')
-    setProperty('gfLight.color', 0x00FF00)
-
-    addLuaScript('scripts/characters/props/abot-stereo')
+    
     addLuaScript('scripts/characters/props/abot-stereo-dark')
-
-    callScript('scripts/characters/props/abot-stereo', 'createSpeaker', {'nene-dark', 0, 0})
     callScript('scripts/characters/props/abot-stereo-dark', 'createSpeaker', {'nene-dark', 0, 0})
 end
 
@@ -53,6 +50,11 @@ function onUpdatePost(elapsed)
     end
     if getObjectOrder(characterType..'Light') ~= getObjectOrder(characterType..'Group') - 1 then
         setObjectOrder(characterType..'Light', getObjectOrder(characterType..'Group'))
+    end
+    if getProperty(characterType..'.alpha') < 1 then
+        setProperty(characterType..'Light.alpha', 1)
+    else
+        setProperty(characterType..'Light.alpha', 0)
     end
     playAnim(characterType..'Light', getProperty(characterType..'.animation.name'), true, getProperty(characterType..'.animation.curAnim.reversed'), getProperty(characterType..'.animation.curAnim.curFrame'))
 end

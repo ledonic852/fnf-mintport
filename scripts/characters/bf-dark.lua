@@ -35,13 +35,29 @@ end
 
 function onUpdatePost(elapsed)
     for property = 1, #propertyTracker do
-        if propertyTracker[property][2] ~= getProperty(characterType..'.'..propertyTracker[property][1]) then
-            propertyTracker[property][2] = getProperty(characterType..'.'..propertyTracker[property][1])
-            setProperty(characterType..'Light.'..propertyTracker[property][1], propertyTracker[property][2])
+        local propertyName = propertyTracker[property][1]
+        local currentValue = getProperty(characterType..'.'..propertyName)
+
+        if propertyTracker[property][2] ~= currentValue then
+            propertyTracker[property][2] = currentValue
+
+            if propertyName == 'x' then
+                -- Adds 5 to the X position.
+                setProperty(characterType..'Light.x', currentValue + 5)
+            else
+                -- Sync everything else
+                setProperty(characterType..'Light.'..propertyName, currentValue)
+            end
         end
     end
+    
     if getObjectOrder(characterType..'Light') ~= getObjectOrder(characterType..'Group') - 1 then
         setObjectOrder(characterType..'Light', getObjectOrder(characterType..'Group'))
+    end
+    if getProperty(characterType..'.alpha') < 1 then
+        setProperty(characterType..'Light.alpha', 1)
+    else
+        setProperty(characterType..'Light.alpha', 0)
     end
     playAnim(characterType..'Light', getProperty(characterType..'.animation.name'), true, getProperty(characterType..'.animation.curAnim.reversed'), getProperty(characterType..'.animation.curAnim.curFrame'))
 end
