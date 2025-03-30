@@ -76,8 +76,6 @@ function onEvent(eventName, value1, value2, strumTime)
 		if value > 0 then
 			if value == 1 then -- Activates the event
 				setProperty('defaultCamZoom', getProperty('defaultCamZoom') + 0.12)
-				setProperty('smallLight.visible', false)
-				setProperty('light.visible', false)
 				setProperty('blackenScreen.visible', true)
 				setProperty('spotlight.visible', true)
 				setProperty('smoke1.visible', true)
@@ -108,8 +106,6 @@ function onEvent(eventName, value1, value2, strumTime)
 		else
 			-- Deactivates the event
 			setProperty('defaultCamZoom', getProperty('defaultCamZoom') - 0.12)
-			setProperty('smallLight.visible', true)
-			setProperty('light.visible', true)
 			setProperty('blackenScreen.visible', false)
 			setProperty('spotlight.visible', false)
 			doTweenAlpha('smoke1ByeBye', 'smoke1', 0, 0.7, 'linear')
