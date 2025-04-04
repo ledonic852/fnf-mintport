@@ -147,13 +147,14 @@ function onCreatePost()
     end
 
     if shadersEnabled == true then
-        initLuaShader('adjustColor')
+        initLuaShader('adjustColorDX')
         for i, object in ipairs({'boyfriend', 'dad', 'gf', 'sprayCans'}) do
-            setSpriteShader(object, 'adjustColor')
+            setSpriteShader(object, 'adjustColorDX')
             setShaderFloat(object, 'hue', -5)
             setShaderFloat(object, 'saturation', -40)
             setShaderFloat(object, 'contrast', -25)
             setShaderFloat(object, 'brightness', -20)
+            setShaderFloat(object, 'thr', 1)
         end
 
         initLuaShader('rain')

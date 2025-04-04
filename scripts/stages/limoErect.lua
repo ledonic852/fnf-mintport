@@ -67,20 +67,22 @@ function onCreatePost()
     end
 
 	if shadersEnabled == true then
-        initLuaShader('adjustColor')
+        initLuaShader('adjustColorDX')
         for i, object in ipairs({'boyfriend', 'dad', 'gf', 'car'}) do
-            setSpriteShader(object, 'adjustColor')
+            setSpriteShader(object, 'adjustColorDX')
             setShaderFloat(object, 'hue', -30)
             setShaderFloat(object, 'saturation', -20)
             setShaderFloat(object, 'contrast', 0)
             setShaderFloat(object, 'brightness', -30)
+			setShaderFloat(object, 'thr', 1)
         end
 		for i = 1, 5 do
-            setSpriteShader('henchmen'..i, 'adjustColor')
+            setSpriteShader('henchmen'..i, 'adjustColorDX')
             setShaderFloat('henchmen'..i, 'hue', -30)
             setShaderFloat('henchmen'..i, 'saturation', -20)
             setShaderFloat('henchmen'..i, 'contrast', 0)
             setShaderFloat('henchmen'..i, 'brightness', -30)
+			setShaderFloat('henchmen', 'thr', 1)
         end
 	end
 
@@ -124,7 +126,7 @@ function onCreatePost()
 
 				if shadersEnabled == true then
 					for i, object in ipairs({'lightPole', 'light', 'henchmenCorpse1', 'henchmenCorpse2'}) do
-						setSpriteShader(object, 'adjustColor')
+						setSpriteShader(object, 'adjustColorDX')
 						setShaderFloat(object, 'hue', -30)
 						setShaderFloat(object, 'saturation', -20)
 						setShaderFloat(object, 'contrast', 0)
@@ -319,7 +321,7 @@ function updateKillingState(elapsed)
 				if shadersEnabled == true then
 					for i = 1, #henchmenParticles do
 						if luaSpriteExists(henchmenParticles[i]) then
-							setSpriteShader(henchmenParticles[i], 'adjustColor')
+							setSpriteShader(henchmenParticles[i], 'adjustColorDX')
 							setShaderFloat(henchmenParticles[i], 'hue', -30)
 							setShaderFloat(henchmenParticles[i], 'saturation', -20)
 							setShaderFloat(henchmenParticles[i], 'contrast', 0)

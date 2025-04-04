@@ -3727,7 +3727,7 @@
 		"gfVersion": "gf-tankmen",
 		"offset": 0,
 		"song": "Ugh Erect",
-		"stage": "tank",
+		"stage": "tankErect",
 		"needsVoices": true,
 		"bpm": 170,
 		"speed": 2.4

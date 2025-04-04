@@ -12,6 +12,7 @@ mallEvil
 school
 schoolEvil
 tank
+tankErect
 streets
 streetsBlazin
 streetsErect

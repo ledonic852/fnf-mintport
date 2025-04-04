@@ -3838,7 +3838,7 @@
 		"offset": 0,
 		"song": "Ugh Erect",
 		"needsVoices": true,
-		"stage": "tank",
+		"stage": "tankErect",
 		"speed": 2.8,
 		"bpm": 170
 	}

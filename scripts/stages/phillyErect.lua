@@ -31,13 +31,14 @@ end
 
 function onCreatePost()
 	if shadersEnabled == true then
-        initLuaShader('adjustColor')
+        initLuaShader('adjustColorDX')
         for i, object in ipairs({'boyfriend', 'dad', 'gf', 'train'}) do
-            setSpriteShader(object, 'adjustColor')
+            setSpriteShader(object, 'adjustColorDX')
             setShaderFloat(object, 'hue', -26)
             setShaderFloat(object, 'saturation', -16)
             setShaderFloat(object, 'contrast', 0)
             setShaderFloat(object, 'brightness', -5)
+			setShaderFloat(object, 'thr', 1)
         end
 	end
 
@@ -229,7 +230,7 @@ function onEvent(eventName, value1, value2, strumTime)
 					setProperty(object..'.color', 0xFFFFFF)
 					-- Re-enabling the shaders here since we removed them.
 					if shadersEnabled == true then
-						setSpriteShader(object, 'adjustColor')
+						setSpriteShader(object, 'adjustColorDX')
 						setShaderFloat(object, 'hue', -26)
 						setShaderFloat(object, 'saturation', -16)
 						setShaderFloat(object, 'contrast', 0)

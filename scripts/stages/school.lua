@@ -52,12 +52,6 @@ function onCreate()
 		swapDanceType();
 		hasCreeps = true;
 	end
-
-	-- death screen properties
-	setPropertyFromClass('substates.GameOverSubstate', 'characterName', 'bf-pixel-dead');
-	setPropertyFromClass('substates.GameOverSubstate', 'deathSoundName', 'fnf_loss_sfx-pixel');
-	setPropertyFromClass('substates.GameOverSubstate', 'loopSoundName', 'gameOver-pixel');
-	setPropertyFromClass('substates.GameOverSubstate', 'endSoundName', 'gameOverEnd-pixel');
 end
 
 danceDir = false;

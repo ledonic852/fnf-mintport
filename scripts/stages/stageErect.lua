@@ -48,25 +48,28 @@ end
 
 function onCreatePost()
 	if shadersEnabled == true then
-		initLuaShader('adjustColor')
-		setSpriteShader('boyfriend', 'adjustColor')
-		setSpriteShader('dad', 'adjustColor')
-		setSpriteShader('gf', 'adjustColor')
+		initLuaShader('adjustColorDX')
+		setSpriteShader('boyfriend', 'adjustColorDX')
+		setSpriteShader('dad', 'adjustColorDX')
+		setSpriteShader('gf', 'adjustColorDX')
 
 		setShaderFloat('boyfriend', 'hue', 12)
 		setShaderFloat('boyfriend', 'saturation', 0)
 		setShaderFloat('boyfriend', 'contrast', 7)
 		setShaderFloat('boyfriend', 'brightness', -23)
+		setShaderFloat('boyfriend', 'thr', 1)
 		
 		setShaderFloat('dad', 'hue', -32)
 		setShaderFloat('dad', 'saturation', 0)
 		setShaderFloat('dad', 'contrast', -23)
 		setShaderFloat('dad', 'brightness', -33)
+		setShaderFloat('dad', 'thr', 1)
 
 		setShaderFloat('gf', 'hue', -9)
 		setShaderFloat('gf', 'saturation', 0)
 		setShaderFloat('gf', 'contrast', -4)
 		setShaderFloat('gf', 'brightness', -30)
+		setShaderFloat('gf', 'thr', 1)
 	end
 end
 

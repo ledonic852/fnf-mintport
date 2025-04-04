@@ -3,7 +3,7 @@
 	"difficulties": "Easy, Normal, Hard",
 	"hideFreeplay": false,
 	"weekBackground": "tank",
-	"weekBefore": "week5pico",
+	"weekBefore": "week6pico",
 	"freeplayColor": [
 		146,
 		113,
@@ -27,6 +27,15 @@
 		],
 		[
 			"Guns (Pico Mix)",
+			"tankman",
+			[
+				246,
+				182,
+				4
+			]
+		],
+		[
+			"Stress (Pico Mix)",
 			"tankman",
 			[
 				246,
