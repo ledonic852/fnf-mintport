@@ -12,8 +12,22 @@ local propertyTracker = {
     {'visible', nil}
 }
 
+local visualizerActive = nil
+function onCreate()
+    --[[
+        This is how the script recognizes which option you chose to use.
+        However, if you decide to take Abot inside another mod,
+        the 'visualizerActive' variable will default to 'true' to avoid any bugs or issues.
+    ]]
+    if getModSetting('visualizerActive', currentModDirectory) == nil then
+        visualizerActive = true
+    else
+        visualizerActive = getModSetting('visualizerActive', currentModDirectory)
+    end
+end
+
 --[[ 
-    Self explanatory, creates the speaker based on if if's attached to a character or not,
+    Self explanatory, creates the speaker based on if it's attached to a character or not,
     and the inputted offsets. Wait, why did I explain it still?
     Because it also sets up everything needed for the script to work, duh.
 ]]
@@ -24,27 +38,29 @@ function createSpeaker(attachedCharacter, offsetX, offsetY)
         characterType = getCharacterType(attachedCharacter)
     end
 
-    makeLuaSprite('AbotSpeakerDarkBG', 'abot/stereoBG')
+    makeLuaSprite('AbotSpeakerBGDark', 'characters/abot/stereoBG')
     if characterType ~= '' then
-        setObjectOrder('AbotSpeakerDarkBG', getObjectOrder(characterType..'Group'))
+        setObjectOrder('AbotSpeakerBGDark', getObjectOrder(characterType..'Group'))
     end
-    addLuaSprite('AbotSpeakerDarkBG')
-    setProperty('AbotSpeakerDarkBG.color', 0x616785)
+    addLuaSprite('AbotSpeakerBGDark')
+    setProperty('AbotSpeakerBGDark.color', 0x616785)
 
     initLuaShader('adjustColor')
     for bar = 1, 7 do
-        makeAnimatedLuaSprite('AbotSpeakerDarkVisualizer'..bar, 'abot/aBotViz')
-        addAnimationByPrefix('AbotSpeakerDarkVisualizer'..bar, 'idle', 'viz'..bar, 24, false)
+        makeAnimatedLuaSprite('AbotSpeakerVisualizerDark'..bar, 'characters/abot/aBotViz')
+        addAnimationByPrefix('AbotSpeakerVisualizerDark'..bar, 'idle', 'viz'..bar, 24, false)
+        addAnimationByPrefix('AbotSpeakerVisualizerDark'..bar, 'visualizer', 'viz'..bar, 0, false)
         if characterType ~= '' then
-            setObjectOrder('AbotSpeakerDarkVisualizer'..bar, getObjectOrder(characterType..'Group'))
+            setObjectOrder('AbotSpeakerVisualizerDark'..bar, getObjectOrder(characterType..'Group'))
         end
-        addLuaSprite('AbotSpeakerDarkVisualizer'..bar)
+        addLuaSprite('AbotSpeakerVisualizerDark'..bar)
+        callMethod('AbotSpeakerVisualizerDark'..bar..'.animation.curAnim.finish')
 
-        setSpriteShader('AbotSpeakerDarkVisualizer'..bar, 'adjustColor')
-        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'hue', -26)
-        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'saturation', -45)
-        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'contrast', 0)
-        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'brightness', -12)
+        setSpriteShader('AbotSpeakerVisualizerDark'..bar, 'adjustColor')
+        setShaderFloat('AbotSpeakerVisualizerDark'..bar, 'hue', -26)
+        setShaderFloat('AbotSpeakerVisualizerDark'..bar, 'saturation', -45)
+        setShaderFloat('AbotSpeakerVisualizerDark'..bar, 'contrast', 0)
+        setShaderFloat('AbotSpeakerVisualizerDark'..bar, 'brightness', -12)
     end
 
     makeLuaSprite('AbotEyesDark')
@@ -56,7 +72,7 @@ function createSpeaker(attachedCharacter, offsetX, offsetY)
     setProperty('AbotEyesDark.color', 0x6F96CE)
 
     makeFlxAnimateSprite('AbotPupilsDark')
-    loadAnimateAtlas('AbotPupilsDark', 'abot/systemEyes')
+    loadAnimateAtlas('AbotPupilsDark', 'characters/abot/systemEyes')
     if characterType ~= '' then
         setObjectOrder('AbotPupilsDark', getObjectOrder(characterType..'Group'))
     end
@@ -65,60 +81,117 @@ function createSpeaker(attachedCharacter, offsetX, offsetY)
     looksAtPlayer = getPropertyFromClass('states.PlayState', 'SONG.notes['..curSection..'].mustHitSection')
     if looksAtPlayer == false then
         setProperty('AbotPupilsDark.anim.curFrame', 17)
-        pauseAnim('AbotPupilsDark')
+        callMethod('AbotPupilsDark.anim.pause')
     else
         setProperty('AbotPupilsDark.anim.curFrame', 0)
-        pauseAnim('AbotPupilsDark')
+        callMethod('AbotPupilsDark.anim.pause')
     end
     
     makeFlxAnimateSprite('AbotSpeakerDark')
-    loadAnimateAtlas('AbotSpeakerDark', 'abot/abotSystem')
+    loadAnimateAtlas('AbotSpeakerDark', 'characters/abot/abotSystem')
     if characterType ~= '' then
         setObjectOrder('AbotSpeakerDark', getObjectOrder(characterType..'Group'))
+    else
+        setProperty('AbotSpeakerDark.x', offsetData[1])
+        setProperty('AbotSpeakerDark.y', offsetData[2])
     end
     addLuaSprite('AbotSpeakerDark')
+    setProperty('AbotSpeakerDark.anim.curFrame', getProperty('AbotSpeakerDark.anim.length') - 1)
 
     initLuaShader('textureSwap')
     setSpriteShader('AbotSpeakerDark', 'textureSwap')
-    setShaderSampler2D('AbotSpeakerDark', 'image', 'abot/dark/abotSystem/spritemap1')
+    setShaderSampler2D('AbotSpeakerDark', 'image', 'characters/abot/dark/abotSystem/spritemap1')
     setShaderFloat('AbotSpeakerDark', 'fadeAmount', 1)
 
-    for property = 1, 2 do
-        if characterType ~= '' then
-            propertyTracker[property][2] = getProperty(characterType..'.'..propertyTracker[property][1])
-            setAbotSpeakerDarkProperty(propertyTracker[property][1], propertyTracker[property][2])
-        else
-            propertyTracker[property][2] = getProperty('AbotSpeakerDark.'..propertyTracker[property][1])
-            setProperty('AbotSpeakerDark.'..propertyTracker[property][1], offsetData[property])
-        end
-    end
+    runHaxeCode([[
+        // Visualizer Code
+        import funkin.vis.dsp.SpectralAnalyzer;
+
+        var visualizer:SpectralAnalyzer;
+        function startVisualizer() {
+            visualizer = new SpectralAnalyzer(FlxG.sound.music._channel.__audioSource, 7, 0.1, 40);
+            visualizer.fftN = 256;
+        }
+
+        function stopVisualizer() {
+            visualizer = null;
+            for (i in 0...7) getLuaObject('AbotSpeakerVisualizerDark' + (i + 1)).animation.curAnim.finish();
+        }
+
+        var levels:Array<Bar>;
+	    var levelMax:Int = 0;
+        function updateVisualizer() {
+            if (visualizer == null) {
+                for (i in 0...7) getLuaObject('AbotSpeakerVisualizerDark' + (i + 1)).visible = false;
+                return;
+            }
+
+            levels = visualizer.getLevels(levels);
+		    var oldLevelMax = levelMax;
+		    levelMax = 0;
+		    for (i in 0...Std.int(Math.min(7, levels.length)))
+		    {
+                var visualizerBar = getLuaObject('AbotSpeakerVisualizerDark' + (i + 1));
+                var animLength:Int = visualizerBar.animation.curAnim.numFrames - 1;
+
+                var animFrame:Int = Math.round(levels[i].value * (animLength + 1));
+                visualizerBar.visible = animFrame > 0;
+			    animFrame = Std.int(Math.abs(FlxMath.bound((animFrame - 1), 0, animLength) - animLength));
+		
+                visualizerBar.animation.curAnim.curFrame = animFrame;
+			    levelMax = Std.int(Math.max(levelMax, animLength - animFrame));
+		    }
+
+            if(levelMax >= 4) {
+			    if(oldLevelMax <= levelMax && (levelMax >= 5 || getLuaObject('AbotSpeakerDark').anim.curFrame >= 3))
+				    getLuaObject('AbotSpeakerDark').anim.play('', true);
+		    }
+        }
+    ]])
 
     if characterName ~= '' then
         if _G[characterType..'Name'] ~= characterName then
-            destroySpeaker()
+            showSpeaker(false)
         end
     end
 end
 
--- Self explanatory again.
-function destroySpeaker()
-    for _, object in ipairs({'AbotSpeakerDark', 'AbotSpeakerDarkBG', 'AbotPupilsDark', 'AbotEyesDark'}) do
-        setProperty(object..'.visible', false)
-    end
+local speakerActive = true
+-- Self explanatory. Nothing to add this time.
+function showSpeaker(value)
+    for _, object in ipairs({'AbotSpeakerDark', 'AbotSpeakerBGDark', 'AbotPupilsDark', 'AbotEyesDark'}) do
+        setProperty(object..'.visible', value)
+    end  
     for bar = 1, 7 do
-        setProperty('AbotSpeakerDarkVisualizer'..bar..'.visible', false)
+        setProperty('AbotSpeakerVisualizerDark'..bar..'.visible', value)
+    end
+
+    speakerActive = value
+    if visualizerActive == true then
+        if value == true then 
+            runHaxeFunction('startVisualizer')
+        else
+            runHaxeFunction('stopVisualizer')
+        end
+    end
+
+    if characterType == '' and value == true then
+        characterType = getCharacterType(characterName)
+        setProperty('AbotSpeakerDark.x', getProperty(characterType..'.x') + offsetData[1])
+        setProperty('AbotSpeakerDark.y', getProperty(characterType..'.y') + offsetData[2])
     end
 end
 
--- This is to prevent the speaker from still appearing when the attached character's gone.
 function onEvent(eventName, value1, value2, strumTime)
+    -- This is to prevent the speaker from still appearing when the attached character's gone.
     if eventName == 'Change Character' then
         if getCharacterType(value2) == characterType and value2 ~= characterName then
-            destroySpeaker()
+            showSpeaker(false)
         elseif characterName ~= '' then
-            createSpeaker(characterName, offsetData[1], offsetData[2])
+            showSpeaker(true)
         end
     end
+    -- This is to make Abot look at either the player or oppnent while using this camera event.
     if eventName == 'Set Camera Target' then
         for _, startStringBF in ipairs({'0', 'bf', 'boyfriend'}) do
             if stringStartsWith(string.lower(value1), startStringBF) then
@@ -144,42 +217,46 @@ function onCountdownTick(swagCounter)
         then the speaker will also do the same.
         This will only work during the countdown.
     ]]
-    if characterType == 'gf' then
-        characterSpeed = getProperty('gfSpeed')
-    else
-        characterSpeed = 1
-    end
-    if characterType ~= '' then
-        danceEveryNumBeats = getProperty(characterType..'.danceEveryNumBeats')
-    else
-        danceEveryNumBeats = 1
-    end
-    if swagCounter % (danceEveryNumBeats * characterSpeed) == 0 then
-        playAnim('AbotSpeakerDark', '', true, false, 1)
-        for bar = 1, 7 do
-            playAnim('AbotSpeakerDarkVisualizer'..bar, 'idle', true)
+    if visualizerActive == false then
+        if characterType == 'gf' then
+            characterSpeed = getProperty('gfSpeed')
+        else
+            characterSpeed = 1
+        end
+        if characterType ~= '' then
+            danceEveryNumBeats = getProperty(characterType..'.danceEveryNumBeats')
+        else
+            danceEveryNumBeats = 1
+        end
+        if swagCounter % (danceEveryNumBeats * characterSpeed) == 0 then
+            playAnim('AbotSpeakerDark', '', true, false, 1)
+            for bar = 1, 7 do
+                playAnim('AbotSpeakerVisualizerDark'..bar, 'idle', true)
+            end
         end
     end
 end
 
 function onBeatHit()
     --[[
-        Same here, but it works for the entirety of the song.
+        Ditto, but it works for the entirety of the song.
     ]]
-    if characterType == 'gf' then
-        characterSpeed = getProperty('gfSpeed')
-    else
-        characterSpeed = 1
-    end
-    if characterType ~= '' then
-        danceEveryNumBeats = getProperty(characterType..'.danceEveryNumBeats')
-    else
-        danceEveryNumBeats = 1
-    end
-    if curBeat % (danceEveryNumBeats * characterSpeed) == 0 then
-        playAnim('AbotSpeakerDark', '', true, false, 1)
-        for bar = 1, 7 do
-            playAnim('AbotSpeakerDarkVisualizer'..bar, 'idle', true)
+    if visualizerActive == false then
+        if characterType == 'gf' then
+            characterSpeed = getProperty('gfSpeed')
+        else
+            characterSpeed = 1
+        end
+        if characterType ~= '' then
+            danceEveryNumBeats = getProperty(characterType..'.danceEveryNumBeats')
+        else
+            danceEveryNumBeats = 1
+        end
+        if curBeat % (danceEveryNumBeats * characterSpeed) == 0 then
+            playAnim('AbotSpeakerDark', '', true, false, 1)
+            for bar = 1, 7 do
+                playAnim('AbotSpeakerVisualizerDark'..bar, 'idle', true)
+            end
         end
     end
 end
@@ -199,34 +276,70 @@ function onMoveCamera(character)
     end
 end
 
+function onSongStart()
+    -- Starts Abot's Visualizer, if the option has been selected.
+    if visualizerActive == true and speakerActive == true then
+        runHaxeFunction('startVisualizer')
+    end
+end
+
+function onEndSong()
+    --[[
+        Stops Abot's Visualizer, if the option has been selected.
+        This is to prevent the speaker from tracking the menu music.
+    ]]
+    if visualizerActive == true then
+        runHaxeFunction('stopVisualizer')
+    end
+end
+
 function onUpdatePost(elapsed)
-    for property = 1, #propertyTracker do
-        if propertyTracker[property][2] ~= getProperty(characterType..'.'..propertyTracker[property][1]) then
-            propertyTracker[property][2] = getProperty(characterType..'.'..propertyTracker[property][1])
-            setAbotSpeakerDarkProperty(propertyTracker[property][1], propertyTracker[property][2])
+    --[[ 
+        Updates Abot's Visualizer, if the option has been selected.
+        Otherwise, the Visualizer's bars will disappear when the animation is finished.
+    ]]
+    if visualizerActive == true then
+        runHaxeFunction('updateVisualizer')
+    elseif speakerActive == true then
+        for bar = 1, 7 do
+            setProperty('AbotSpeakerVisualizerDark'..bar..'.visible', not getProperty('AbotSpeakerVisualizerDark'..bar..'.animation.finished'))
         end
     end
-    if characterType ~= '' then
-        translateAlpha(getProperty(characterType..'.alpha'))
+
+    --[[ 
+        This is what makes Abot track properties and apply them to the entire speaker.
+        It also works when the speaker isn't attached to any character, 
+        as it'd be annoying to change every part of the speaker manually.
+    ]]
+    for property = 1, #propertyTracker do
+        if characterType ~= '' then
+            translateAlpha(getProperty(characterType..'.alpha'))
+            if propertyTracker[property][2] ~= getProperty(characterType..'.'..propertyTracker[property][1]) then
+                propertyTracker[property][2] = getProperty(characterType..'.'..propertyTracker[property][1])
+                setAbotSpeakerProperty(propertyTracker[property][1], propertyTracker[property][2])
+            end
+        else
+            if propertyTracker[property][2] ~= getProperty('AbotSpeakerDark.'..propertyTracker[property][1]) then
+                propertyTracker[property][2] = getProperty('AbotSpeakerDark.'..propertyTracker[property][1])
+                setAbotSpeakerProperty(propertyTracker[property][1], propertyTracker[property][2])
+            end
+        end
     end
     
-    --[[
-        These make it so the animations stop when they're supposed to be,
-        instead of looping endlessly.
-    ]] 
+    -- These make it so the animations stop when they're supposed to, instead of looping endlessly.
     if getProperty('AbotSpeakerDark.anim.curFrame') >= 15 then
-        pauseAnim('AbotSpeakerDark')
+        callMethod('AbotSpeakerDark.anim.pause')
     end
     if looksAtPlayer == true then
         if getProperty('AbotPupilsDark.anim.curFrame') >= 17 then
             looksAtPlayer = false
-            pauseAnim('AbotPupilsDark')
+            callMethod('AbotPupilsDark.anim.pause')
         end
     end
     if looksAtPlayer == false then
         if getProperty('AbotPupilsDark.anim.curFrame') >= 31 then
             looksAtPlayer = true
-            pauseAnim('AbotPupilsDark')
+            callMethod('AbotPupilsDark.anim.pause')
         end
     end
     -- This is how we control the animations' speed depending on the 'playbackRate' for Atlas Sprites.
@@ -237,20 +350,20 @@ end
 function translateAlpha(value)
     setShaderFloat('AbotSpeakerDark', 'fadeAmount', value)
     for bar = 1, 7 do
-        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'hue', interpolateFloat(0, -26, value))
-        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'saturation', interpolateFloat(0, -45, value))
-        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'contrast', interpolateFloat(0, 0, value))
-        setShaderFloat('AbotSpeakerDarkVisualizer'..bar, 'brightness', interpolateFloat(0, -12, value))
+        setShaderFloat('AbotSpeakerVisualizerDark'..bar, 'hue', interpolateFloat(0, -26, value))
+        setShaderFloat('AbotSpeakerVisualizerDark'..bar, 'saturation', interpolateFloat(0, -45, value))
+        setShaderFloat('AbotSpeakerVisualizerDark'..bar, 'contrast', interpolateFloat(0, 0, value))
+        setShaderFloat('AbotSpeakerVisualizerDark'..bar, 'brightness', interpolateFloat(0, -12, value))
     end
 
-    setProperty('AbotSpeakerDarkBG.color', interpolateColor(0xFFFFFF, 0x616785, value))
+    setProperty('AbotSpeakerBGDark.color', interpolateColor(0xFFFFFF, 0x616785, value))
     setProperty('AbotEyesDark.color', interpolateColor(0xFFFFFF, 0x6F96CE, value))
 end
 
 --[[
-    This function is useful if you change any of the properties of the attached character, 
-    or the speaker itself if it's not attached to any character, instead of changing it manually. 
-    This only works for the properties present in 'propertyTracker', though.
+    This function is used when you change any of the properties of the attached character, 
+    or the speaker itself if it's not attached to any character. 
+    This only works for the properties present in 'propertyTracker'.
 
     WARNING: Do not use this function if you want to change Abot Speaker's properties,
     as it is only meant to be used inside this script.
@@ -261,18 +374,27 @@ end
     setProperty('gf.alpha', 0.5)            --> If attached to the GF character type.
     setProperty('AbotSpeakerDark.alpha', 0.5)   --> If not attached to any character type.
 
-    'doTween' functions also work the same way. 
+    Other Lua functions also work the same way (except for shader functions in this case).
+    Examples:
+    - If attached to a character type:
+        doTweenX('tweenTestX', 'boyfriend', 500, 3, 'linear')
+        doTweenY('tweenTestY', 'dad', 200, 3, 'linear')
+        doTweenColor('tweenTestColor', 'gf', 'FF0000', 3, 'linear')
+    
+    - If not attached to a character type:
+        doTweenX('tweenTestX', 'AbotSpeakerDark', 500, 3, 'linear')
+        doTweenY('tweenTestY', 'AbotSpeakerDark', 200, 3, 'linear')
 ]]
-function setAbotSpeakerDarkProperty(property, value)
+function setAbotSpeakerProperty(property, value)
     if property == 'x' then
         if characterType ~= '' then
             value = value + offsetData[1]
             setProperty('AbotSpeakerDark.'..property, value - 100)
         end
         for bar = 1, 7 do
-            setProperty('AbotSpeakerDarkVisualizer'..bar..'.'..property, getProperty('AbotSpeakerDark.'..property) + 200 + visualizerOffsetX(bar))
+            setProperty('AbotSpeakerVisualizerDark'..bar..'.'..property, getProperty('AbotSpeakerDark.'..property) + 200 + visualizerOffsetX(bar))
         end
-        setProperty('AbotSpeakerDarkBG.'..property, getProperty('AbotSpeakerDark.'..property) + 165)
+        setProperty('AbotSpeakerBGDark.'..property, getProperty('AbotSpeakerDark.'..property) + 165)
         setProperty('AbotEyesDark.'..property, getProperty('AbotSpeakerDark.'..property) + 30)
         setProperty('AbotPupilsDark.'..property, getProperty('AbotSpeakerDark.'..property) - 507)
     elseif property == 'y' then
@@ -281,9 +403,9 @@ function setAbotSpeakerDarkProperty(property, value)
             setProperty('AbotSpeakerDark.'..property, value + 316)
         end
         for bar = 1, 7 do
-            setProperty('AbotSpeakerDarkVisualizer'..bar..'.'..property, getProperty('AbotSpeakerDark.'..property) + 84 + visualizerOffsetY(bar))
+            setProperty('AbotSpeakerVisualizerDark'..bar..'.'..property, getProperty('AbotSpeakerDark.'..property) + 84 + visualizerOffsetY(bar))
         end
-        setProperty('AbotSpeakerDarkBG.'..property, getProperty('AbotSpeakerDark.'..property) + 30)
+        setProperty('AbotSpeakerBGDark.'..property, getProperty('AbotSpeakerDark.'..property) + 30)
         setProperty('AbotEyesDark.'..property, getProperty('AbotSpeakerDark.'..property) + 230)
         setProperty('AbotPupilsDark.'..property, getProperty('AbotSpeakerDark.'..property) - 492)
     else
@@ -291,9 +413,9 @@ function setAbotSpeakerDarkProperty(property, value)
             setProperty('AbotSpeakerDark.'..property, value)
         end
         for bar = 1, 7 do
-            setProperty('AbotSpeakerDarkVisualizer'..bar..'.'..property, value)
+            setProperty('AbotSpeakerVisualizerDark'..bar..'.'..property, value)
         end
-        setProperty('AbotSpeakerDarkBG.'..property, value)
+        setProperty('AbotSpeakerBGDark.'..property, value)
         setProperty('AbotEyesDark.'..property, value)
         setProperty('AbotPupilsDark.'..property, value)
     end
@@ -304,25 +426,25 @@ function updateSpeaker(property)
     if property == 'x' then
         setProperty('AbotSpeakerDark.'..property, offset.x - 100)
         for bar = 1, 7 do
-            setProperty('AbotSpeakerDarkVisualizer'..bar..'.'..property, offset.x + 100 + visualizerOffsetX(bar))
+            setProperty('AbotSpeakerVisualizerDark'..bar..'.'..property, offset.x + 100 + visualizerOffsetX(bar))
         end
-        setProperty('AbotSpeakerDarkBG.'..property, offset.x + 65)
+        setProperty('AbotSpeakerBGDark.'..property, offset.x + 65)
         setProperty('AbotEyesDark.'..property, offset.x - 60)
         setProperty('AbotPupilsDark.'..property, offset.x - 607)
     elseif property == 'y' then
         setProperty('AbotSpeakerDark.'..property, offset.y + 316)
         for bar = 1, 7 do
-            setProperty('AbotSpeakerDarkVisualizer'..bar..'.'..property, offset.y + 400 + visualizerOffsetY(bar))
+            setProperty('AbotSpeakerVisualizerDark'..bar..'.'..property, offset.y + 400 + visualizerOffsetY(bar))
         end
-        setProperty('AbotSpeakerDarkBG.'..property, offset.y + 347)
+        setProperty('AbotSpeakerBGDark.'..property, offset.y + 347)
         setProperty('AbotEyesDark.'..property, offset.y + 567)
         setProperty('AbotPupilsDark.'..property, offset.y - 176)
     elseif characterType ~= '' then
         setProperty('AbotSpeakerDark.'..property, getProperty(characterType..'.'..property))
         for bar = 1, 7 do
-            setProperty('AbotSpeakerDarkVisualizer'..bar..'.'..property, getProperty(characterType..'.'..property))
+            setProperty('AbotSpeakerVisualizerDark'..bar..'.'..property, getProperty(characterType..'.'..property))
         end
-        setProperty('AbotSpeakerDarkBG.'..property, getProperty(characterType..'.'..property))
+        setProperty('AbotSpeakerBGDark.'..property, getProperty(characterType..'.'..property))
         setProperty('AbotEyesDark.'..property, getProperty(characterType..'.'..property))
         setProperty('AbotPupilsDark.'..property, getProperty(characterType..'.'..property))
     end
@@ -373,10 +495,6 @@ end
 
 function interpolateFloat(value1, value2, factor)
     return (value2 - value1) * factor + value1
-end
-
-function pauseAnim(object)
-    runHaxeCode("game.getLuaObject('"..object.."').anim.pause();")
 end
 
 function getCharacterType(characterName)

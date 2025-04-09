@@ -1,6 +1,6 @@
 local characterType = ''
 local characterName = ''
-local looksAtPlayer = true
+local looksAtPlayer = nil
 local offsetData = {0, 0}
 local propertyTracker = {
     {'x', nil},
@@ -14,8 +14,22 @@ local propertyTracker = {
     {'visible', nil}
 }
 
+local visualizerActive = nil
+function onCreate()
+    --[[
+        This is how the script recognizes which option you chose to use.
+        However, if you decide to take Abot inside another mod,
+        the 'visualizerActive' variable will default to 'true' to avoid any bugs or issues.
+    ]]
+    if getModSetting('visualizerActive', currentModDirectory) == nil then
+        visualizerActive = true
+    else
+        visualizerActive = getModSetting('visualizerActive', currentModDirectory)
+    end
+end
+
 --[[ 
-    Self explanatory, creates the speaker based on if if's attached to a character or not,
+    Self explanatory, creates the speaker based on if it's attached to a character or not,
     and the inputted offsets. Wait, why did I explain it still?
     Because it also sets up everything needed for the script to work, duh.
 ]]
@@ -26,19 +40,21 @@ function createSpeaker(attachedCharacter, offsetX, offsetY)
         characterType = getCharacterType(attachedCharacter)
     end
 
-    makeLuaSprite('AbotSpeakerBG', 'abot/stereoBG')
+    makeLuaSprite('AbotSpeakerBG', 'characters/abot/stereoBG')
     if characterType ~= '' then
         setObjectOrder('AbotSpeakerBG', getObjectOrder(characterType..'Group'))
     end
     addLuaSprite('AbotSpeakerBG')
 
     for bar = 1, 7 do
-        makeAnimatedLuaSprite('AbotSpeakerVisualizer'..bar, 'abot/aBotViz')
+        makeAnimatedLuaSprite('AbotSpeakerVisualizer'..bar, 'characters/abot/aBotViz')
         addAnimationByPrefix('AbotSpeakerVisualizer'..bar, 'idle', 'viz'..bar, 24, false)
+        addAnimationByPrefix('AbotSpeakerVisualizer'..bar, 'visualizer', 'viz'..bar, 0, false)
         if characterType ~= '' then
             setObjectOrder('AbotSpeakerVisualizer'..bar, getObjectOrder(characterType..'Group'))
         end
         addLuaSprite('AbotSpeakerVisualizer'..bar)
+        callMethod('AbotSpeakerVisualizer'..bar..'.animation.curAnim.finish')
     end
 
     makeLuaSprite('AbotEyes')
@@ -49,7 +65,7 @@ function createSpeaker(attachedCharacter, offsetX, offsetY)
     addLuaSprite('AbotEyes')
 
     makeFlxAnimateSprite('AbotPupils')
-    loadAnimateAtlas('AbotPupils', 'abot/systemEyes')
+    loadAnimateAtlas('AbotPupils', 'characters/abot/systemEyes')
     if characterType ~= '' then
         setObjectOrder('AbotPupils', getObjectOrder(characterType..'Group'))
     end
@@ -58,30 +74,69 @@ function createSpeaker(attachedCharacter, offsetX, offsetY)
     looksAtPlayer = getPropertyFromClass('states.PlayState', 'SONG.notes['..curSection..'].mustHitSection')
     if looksAtPlayer == false then
         setProperty('AbotPupils.anim.curFrame', 17)
-        pauseAnim('AbotPupils')
+        callMethod('AbotPupils.anim.pause')
     else
         setProperty('AbotPupils.anim.curFrame', 0)
-        pauseAnim('AbotPupils')
+        callMethod('AbotPupils.anim.pause')
     end
     
     makeFlxAnimateSprite('AbotSpeaker')
-    loadAnimateAtlas('AbotSpeaker', 'abot/abotSystem')
+    loadAnimateAtlas('AbotSpeaker', 'characters/abot/abotSystem')
     if characterType ~= '' then
         setObjectOrder('AbotSpeaker', getObjectOrder(characterType..'Group'))
+    else
+        setProperty('AbotSpeaker.x', offsetData[1])
+        setProperty('AbotSpeaker.y', offsetData[2])
     end
     addLuaSprite('AbotSpeaker')
-
-    for property = 1, 2 do
-        if characterType ~= '' then
-            propertyTracker[property][2] = getProperty(characterType..'.'..propertyTracker[property][1])
-            setAbotSpeakerProperty(propertyTracker[property][1], propertyTracker[property][2])
-        else
-            propertyTracker[property][2] = getProperty('AbotSpeaker.'..propertyTracker[property][1])
-            setProperty('AbotSpeaker.'..propertyTracker[property][1], offsetData[property])
-        end
-    end
+    setProperty('AbotSpeaker.anim.curFrame', getProperty('AbotSpeaker.anim.length') - 1)
 
     runHaxeCode([[
+        // Visualizer Code
+        import funkin.vis.dsp.SpectralAnalyzer;
+
+        var visualizer:SpectralAnalyzer;
+        function startVisualizer() {
+            visualizer = new SpectralAnalyzer(FlxG.sound.music._channel.__audioSource, 7, 0.1, 40);
+            visualizer.fftN = 256;
+        }
+
+        function stopVisualizer() {
+            visualizer = null;
+            for (i in 0...7) getLuaObject('AbotSpeakerVisualizer' + (i + 1)).animation.curAnim.finish();
+        }
+
+        var levels:Array<Bar>;
+	    var levelMax:Int = 0;
+        function updateVisualizer() {
+            if (visualizer == null) {
+                for (i in 0...7) getLuaObject('AbotSpeakerVisualizer' + (i + 1)).visible = false;
+                return;
+            }
+
+            levels = visualizer.getLevels(levels);
+		    var oldLevelMax = levelMax;
+		    levelMax = 0;
+		    for (i in 0...Std.int(Math.min(7, levels.length)))
+		    {
+                var visualizerBar = getLuaObject('AbotSpeakerVisualizer' + (i + 1));
+                var animLength:Int = visualizerBar.animation.curAnim.numFrames - 1;
+
+                var animFrame:Int = Math.round(levels[i].value * (animLength + 1));
+                visualizerBar.visible = animFrame > 0;
+			    animFrame = Std.int(Math.abs(FlxMath.bound((animFrame - 1), 0, animLength) - animLength));
+		
+                visualizerBar.animation.curAnim.curFrame = animFrame;
+			    levelMax = Std.int(Math.max(levelMax, animLength - animFrame));
+		    }
+
+            if(levelMax >= 4) {
+			    if(oldLevelMax <= levelMax && (levelMax >= 5 || getLuaObject('AbotSpeaker').anim.curFrame >= 3))
+				    getLuaObject('AbotSpeaker').anim.play('', true);
+		    }
+        }
+
+        // Shader Tracking Code
         function shaderCheck(object:String, character:String) return getLuaObject(object).shader == getAttachedCharacter(character).shader;
         function applyShader(object:String, character:String) getLuaObject(object).shader = getAttachedCharacter(character).shader;
         function shaderAtlasCheck(object:String, character:String) return game.variables.get(object).shader == getAttachedCharacter(character).shader;
@@ -103,30 +158,47 @@ function createSpeaker(attachedCharacter, offsetX, offsetY)
 
     if characterName ~= '' then
         if _G[characterType..'Name'] ~= characterName then
-            destroySpeaker()
+            showSpeaker(false)
         end
     end
 end
 
--- Self explanatory again.
-function destroySpeaker()
+local speakerActive = true
+-- Self explanatory. Nothing to add this time.
+function showSpeaker(value)
     for _, object in ipairs({'AbotSpeaker', 'AbotSpeakerBG', 'AbotPupils', 'AbotEyes'}) do
-        setProperty(object..'.visible', false)
-    end
+        setProperty(object..'.visible', value)
+    end  
     for bar = 1, 7 do
-        setProperty('AbotSpeakerVisualizer'..bar..'.visible', false)
+        setProperty('AbotSpeakerVisualizer'..bar..'.visible', value)
+    end
+
+    speakerActive = value
+    if visualizerActive == true then
+        if value == true then 
+            runHaxeFunction('startVisualizer')
+        else
+            runHaxeFunction('stopVisualizer')
+        end
+    end
+
+    if characterType == '' and value == true then
+        characterType = getCharacterType(characterName)
+        setProperty('AbotSpeaker.x', getProperty(characterType..'.x') + offsetData[1])
+        setProperty('AbotSpeaker.y', getProperty(characterType..'.y') + offsetData[2])
     end
 end
 
--- This is to prevent the speaker from still appearing when the attached character's gone.
 function onEvent(eventName, value1, value2, strumTime)
+    -- This is to prevent the speaker from still appearing when the attached character's gone.
     if eventName == 'Change Character' then
         if getCharacterType(value2) == characterType and value2 ~= characterName then
-            destroySpeaker()
+            showSpeaker(false)
         elseif characterName ~= '' then
-            createSpeaker(characterName, offsetData[1], offsetData[2])
+            showSpeaker(true)
         end
     end
+    -- This is to make Abot look at either the player or oppnent while using this camera event.
     if eventName == 'Set Camera Target' then
         for _, startStringBF in ipairs({'0', 'bf', 'boyfriend'}) do
             if stringStartsWith(string.lower(value1), startStringBF) then
@@ -152,42 +224,46 @@ function onCountdownTick(swagCounter)
         then the speaker will also do the same.
         This will only work during the countdown.
     ]]
-    if characterType == 'gf' then
-        characterSpeed = getProperty('gfSpeed')
-    else
-        characterSpeed = 1
-    end
-    if characterType ~= '' then
-        danceEveryNumBeats = getProperty(characterType..'.danceEveryNumBeats')
-    else
-        danceEveryNumBeats = 1
-    end
-    if swagCounter % (danceEveryNumBeats * characterSpeed) == 0 then
-        playAnim('AbotSpeaker', '', true, false, 1)
-        for bar = 1, 7 do
-            playAnim('AbotSpeakerVisualizer'..bar, 'idle', true)
+    if visualizerActive == false then
+        if characterType == 'gf' then
+            characterSpeed = getProperty('gfSpeed')
+        else
+            characterSpeed = 1
+        end
+        if characterType ~= '' then
+            danceEveryNumBeats = getProperty(characterType..'.danceEveryNumBeats')
+        else
+            danceEveryNumBeats = 1
+        end
+        if swagCounter % (danceEveryNumBeats * characterSpeed) == 0 then
+            playAnim('AbotSpeaker', '', true, false, 1)
+            for bar = 1, 7 do
+                playAnim('AbotSpeakerVisualizer'..bar, 'idle', true)
+            end
         end
     end
 end
 
 function onBeatHit()
     --[[
-        Same here, but it works for the entirety of the song.
+        Ditto, but it works for the entirety of the song.
     ]]
-    if characterType == 'gf' then
-        characterSpeed = getProperty('gfSpeed')
-    else
-        characterSpeed = 1
-    end
-    if characterType ~= '' then
-        danceEveryNumBeats = getProperty(characterType..'.danceEveryNumBeats')
-    else
-        danceEveryNumBeats = 1
-    end
-    if curBeat % (danceEveryNumBeats * characterSpeed) == 0 then
-        playAnim('AbotSpeaker', '', true, false, 1)
-        for bar = 1, 7 do
-            playAnim('AbotSpeakerVisualizer'..bar, 'idle', true)
+    if visualizerActive == false then
+        if characterType == 'gf' then
+            characterSpeed = getProperty('gfSpeed')
+        else
+            characterSpeed = 1
+        end
+        if characterType ~= '' then
+            danceEveryNumBeats = getProperty(characterType..'.danceEveryNumBeats')
+        else
+            danceEveryNumBeats = 1
+        end
+        if curBeat % (danceEveryNumBeats * characterSpeed) == 0 then
+            playAnim('AbotSpeaker', '', true, false, 1)
+            for bar = 1, 7 do
+                playAnim('AbotSpeakerVisualizer'..bar, 'idle', true)
+            end
         end
     end
 end
@@ -207,14 +283,56 @@ function onMoveCamera(character)
     end
 end
 
+function onSongStart()
+    -- Starts Abot's Visualizer, if the option has been selected.
+    if visualizerActive == true and speakerActive == true then
+        runHaxeFunction('startVisualizer')
+    end
+end
+
+function onEndSong()
+    --[[
+        Stops Abot's Visualizer, if the option has been selected.
+        This is to prevent the speaker from tracking the menu music.
+    ]]
+    if visualizerActive == true then
+        runHaxeFunction('stopVisualizer')
+    end
+end
+
 function onUpdatePost(elapsed)
-    for property = 1, #propertyTracker do
-        if propertyTracker[property][2] ~= getProperty(characterType..'.'..propertyTracker[property][1]) then
-            propertyTracker[property][2] = getProperty(characterType..'.'..propertyTracker[property][1])
-            setAbotSpeakerProperty(propertyTracker[property][1], propertyTracker[property][2])
+    --[[ 
+        Updates Abot's Visualizer, if the option has been selected.
+        Otherwise, the Visualizer's bars will disappear when the animation is finished.
+    ]]
+    if visualizerActive == true then
+        runHaxeFunction('updateVisualizer')
+    elseif speakerActive == true then
+        for bar = 1, 7 do
+            setProperty('AbotSpeakerVisualizer'..bar..'.visible', not getProperty('AbotSpeakerVisualizer'..bar..'.animation.finished'))
         end
     end
 
+    --[[ 
+        This is what makes Abot track properties and apply them to the entire speaker.
+        It also works when the speaker isn't attached to any character, 
+        as it'd be annoying to change every part of the speaker manually.
+    ]]
+    for property = 1, #propertyTracker do
+        if characterType ~= '' then
+            if propertyTracker[property][2] ~= getProperty(characterType..'.'..propertyTracker[property][1]) then
+                propertyTracker[property][2] = getProperty(characterType..'.'..propertyTracker[property][1])
+                setAbotSpeakerProperty(propertyTracker[property][1], propertyTracker[property][2])
+            end
+        else
+            if propertyTracker[property][2] ~= getProperty('AbotSpeaker.'..propertyTracker[property][1]) then
+                propertyTracker[property][2] = getProperty('AbotSpeaker.'..propertyTracker[property][1])
+                setAbotSpeakerProperty(propertyTracker[property][1], propertyTracker[property][2])
+            end
+        end
+    end
+
+    -- Ditto, but for shaders.
     for _, object in ipairs({'AbotSpeaker', 'AbotPupils'}) do
         if runHaxeFunction('shaderAtlasCheck', {object, characterType}) == false then
             runHaxeFunction('applyAtlasShader', {object, characterType})
@@ -230,35 +348,33 @@ function onUpdatePost(elapsed)
             runHaxeFunction('applyShader', {object, characterType})
         end
     end
-    
-    --[[
-        These make it so the animations stop when they're supposed to be,
-        instead of looping endlessly.
-    ]] 
+
+    -- These make it so the animations stop when they're supposed to, instead of looping endlessly.
     if getProperty('AbotSpeaker.anim.curFrame') >= 15 then
-        pauseAnim('AbotSpeaker')
+        callMethod('AbotSpeaker.anim.pause')
     end
     if looksAtPlayer == true then
         if getProperty('AbotPupils.anim.curFrame') >= 17 then
             looksAtPlayer = false
-            pauseAnim('AbotPupils')
+            callMethod('AbotPupils.anim.pause')
         end
     end
     if looksAtPlayer == false then
         if getProperty('AbotPupils.anim.curFrame') >= 31 then
             looksAtPlayer = true
-            pauseAnim('AbotPupils')
+            callMethod('AbotPupils.anim.pause')
         end
     end
+
     -- This is how we control the animations' speed depending on the 'playbackRate' for Atlas Sprites.
     setProperty('AbotSpeaker.anim.framerate', 24 * playbackRate)
     setProperty('AbotPupils.anim.framerate', 24 * playbackRate)
 end
 
 --[[
-    This function is useful if you change any of the properties of the attached character, 
-    or the speaker itself if it's not attached to any character, instead of changing it manually. 
-    This only works for the properties present in 'propertyTracker', though.
+    This function is used when you change any of the properties of the attached character, 
+    or the speaker itself if it's not attached to any character. 
+    This only works for the properties present in 'propertyTracker'.
 
     WARNING: Do not use this function if you want to change Abot Speaker's properties,
     as it is only meant to be used inside this script.
@@ -269,7 +385,16 @@ end
     setProperty('gf.alpha', 0.5)            --> If attached to the GF character type.
     setProperty('AbotSpeaker.alpha', 0.5)   --> If not attached to any character type.
 
-    'doTween' functions also work the same way. 
+    Other Lua functions also work the same way.
+    Examples:
+    - If attached to a character type:
+        doTweenX('tweenTestX', 'boyfriend', 500, 3, 'linear')
+        doTweenY('tweenTestY', 'dad', 200, 3, 'linear')
+        doTweenColor('tweenTestColor', 'gf', 'FF0000', 3, 'linear')
+    
+    - If not attached to a character type:
+        setSpriteShader('AbotSpeaker', 'shaderName')
+        setShaderFloat('AbotSpeaker', 'shaderValue', value)
 ]]
 function setAbotSpeakerProperty(property, value)
     if property == 'x' then
@@ -305,9 +430,10 @@ function setAbotSpeakerProperty(property, value)
         setProperty('AbotEyes.'..property, value)
         setProperty('AbotPupils.'..property, value)
     end
-end    
+end
 
 --[[ Old version of the function above.
+
 function updateSpeaker(property)
     if property == 'x' then
         setProperty('AbotSpeaker.'..property, offset.x - 100)
@@ -361,10 +487,6 @@ function visualizerOffsetY(bar)
         i = i + 1
     end
     return offsetY
-end
-
-function pauseAnim(object)
-    runHaxeCode("game.getLuaObject('"..object.."').anim.pause();")
 end
 
 function getCharacterType(characterName)

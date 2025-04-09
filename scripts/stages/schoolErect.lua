@@ -1,102 +1,90 @@
-hasCreeps = false;
 function onCreate()
-	makeLuaSprite('sky', 'weeb/erect/weebSky2', 0, 0);
-	setScrollFactor('sky', 0.1, 0.1);
-	setProperty('sky.antialiasing', false);
-	widShit = math.floor(getProperty('sky.width') * 6);
-	scaleObject('sky', 6, 6);
-	addLuaSprite('sky', false);
+	makeLuaSprite('sky', 'weeb/erect/weebSky', -164, -78)
+	setScrollFactor('sky', 0.2, 0.2)
+	scaleObject('sky', 6, 6)
+	addLuaSprite('sky')
+	setProperty('sky.antialiasing', false)
 
-	repositionShit = -200;
-	makeLuaSprite('school', 'weeb/erect/weebSchool2', repositionShit, 0);
-	setScrollFactor('school', 0.6, 0.9);
-	setProperty('school.antialiasing', false);
-	scaleObject('school', 6, 6);
-	addLuaSprite('school', false);
-	
-	makeLuaSprite('street', 'weeb/erect/weebStreet2', repositionShit, 0);
-	setScrollFactor('street', 0.95, 0.95);
-	setProperty('street.antialiasing', false);
-	scaleObject('street', 6, 6);
-	addLuaSprite('street', false);
+	makeLuaSprite('treesBackground', 'weeb/erect/weebBackTrees', -242, -80)
+	setScrollFactor('treesBackground', 0.5, 0.5)
+	scaleObject('treesBackground', 6, 6)
+	addLuaSprite('treesBackground')
+	setProperty('treesBackground.antialiasing', false)
 
-	if not lowQuality then
-		makeLuaSprite('treesBack', 'weeb/erect/weebTreesBack2', repositionShit + 170, 130);
-		setScrollFactor('treesBack', 0.9, 0.9);
-		setProperty('treesBack.antialiasing', false);
-		setGraphicSize('treesBack', math.floor(widShit * 0.8));
-		addLuaSprite('treesBack', false);
-	end
-	
-	makeAnimatedLuaSprite('trees', 'weeb/erect/weebTrees2', repositionShit - 380, -800, 'packer');
-	addAnimation('trees', 'treeLoop', {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18}, 12, true);
-	setScrollFactor('trees', 0.85, 0.85);
-	setProperty('trees.antialiasing', false);
-	setGraphicSize('trees', math.floor(widShit * 1.4));
-	addLuaSprite('trees', false);
+	makeLuaSprite('schoolBuilding', 'weeb/erect/weebSchool', -216, -38)
+	setScrollFactor('schoolBuilding', 0.75, 0.75)
+	scaleObject('schoolBuilding', 6, 6)
+	addLuaSprite('schoolBuilding')
+	setProperty('schoolBuilding.antialiasing', false)
 
-	-- background things that only load if you have low quality option turned off
-	if not lowQuality then
-		makeAnimatedLuaSprite('petals', 'weeb/erect/petals2', repositionShit, -40);
-		addAnimationByPrefix('petals', 'idle', 'PETALS ALL', 24, true);
-		setScrollFactor('petals', 0.85, 0.85);
-		setProperty('petals.antialiasing', false);
-		setGraphicSize('petals', widShit);
-		addLuaSprite('petals', false);
-	end
+	makeLuaSprite('schoolStreet', 'weeb/erect/weebStreet', -200, 6)
+	scaleObject('schoolStreet', 6, 6)
+	addLuaSprite('schoolStreet')
+	setProperty('schoolStreet.antialiasing', false)
+
+	makeLuaSprite('treesBack', 'weeb/erect/weebTreesBack', -200, 6)
+	scaleObject('treesBack', 6, 6)
+	addLuaSprite('treesBack')
+	setProperty('treesBack.antialiasing', false)
+
+	makeAnimatedLuaSprite('trees', 'weeb/erect/weebTrees', -806, -1050, 'packer')
+	addAnimation('trees', 'anim', {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18}, 12)
+	scaleObject('trees', 6, 6)
+	addLuaSprite('trees')
+	setProperty('trees.antialiasing', false)
+
+	makeAnimatedLuaSprite('fallingPetals', 'weeb/erect/petals', -20, -40)
+	addAnimationByPrefix('fallingPetals', 'anim', 'PETALS ALL')
+	scaleObject('fallingPetals', 6, 6)
+	addLuaSprite('fallingPetals')
+	setProperty('fallingPetals.antialiasing', false)
 end
 
 function onCreatePost()
-    initLuaShader("adjustColorDX");
-    local color = hex2rgb('52351d')
+	if shadersEnabled == true then
+		initLuaShader('adjustColorDX')
+        for i, object in ipairs({'boyfriend', 'dad', 'gf'}) do
+            setSpriteShader(object, 'adjustColorDX')
+    		setShaderFloat(object, 'hue', -10)
+    		setShaderFloat(object, 'saturation', -23)
+    		setShaderFloat(object, 'contrast', 24)
+    		setShaderFloat(object, 'brightness', -66)
+			
+            setShaderFloat(object, 'ang', math.rad(90))
+    		setShaderFloat(object, 'str', 1)
+    		setShaderFloat(object, 'dist', 5)
+    		setShaderFloat(object, 'thr', 0.1)
 
-    for i, v in pairs({'dad', 'gf', 'boyfriend'}) do
-        setSpriteShader(v, 'adjustColorDX')
+			setShaderFloat(object, 'AA_STAGES', 2)
+			setShaderFloatArray(object, 'dropColor', {82 / 255, 53 / 255, 29 / 255})
 
-        -- Drop shadow parameters
-        setShaderFloat(v, 'ang', 90 * (math.pi / 180))
-        setShaderFloat(v, 'dist', 5)
-        setShaderFloat(v, 'str', 1)
-        setShaderFloat(v, 'thr', 0)
+			local imageFile = stringSplit(getProperty(object..'.imageFile'), '/')
+			if checkFileExists('images/characters/masks/'..imageFile[#imageFile]..'_mask.png') then
+				setShaderSampler2D(object, 'altMask', 'characters/masks/'..imageFile[#imageFile]..'_mask')
+				setShaderFloat(object, 'thr2', 1)
+				setShaderBool(object, 'useMask', true)
+			else
+				setShaderBool(object, 'useMask', false)
+			end
 
-        setShaderSampler2D(v, 'altMask', 'weeb/erect/masks/' .. getProperty(v .. '.imageFile'):sub(12) .. '_mask')
-        setShaderBool(v, 'useMask', true)
-        setShaderFloat(v, 'thr2', 0.2)
+			if object == 'gf' then
+				setShaderFloat(object, 'hue', -10)
+    			setShaderFloat(object, 'saturation', -25)
+    			setShaderFloat(object, 'contrast', 5)
+    			setShaderFloat(object, 'brightness', -42)
 
-        setShaderFloatArray(v, 'dropColor', {color.r, color.g, color.b})
-
-        -- Color adjustment
-        setShaderFloat(v, 'hue', -10)
-        setShaderFloat(v, 'saturation', -23)
-        setShaderFloat(v, 'brightness', -66)
-        setShaderFloat(v, 'contrast', 4)
-        setShaderFloat(v, 'AA_STAGES', 0)
-    end
-
-    if gfName ~= 'nene-pixel' then
-        setShaderFloat('gf', 'brightness', -42)
-        setShaderFloat('gf', 'contrast', 5)
-        setShaderFloat('gf', 'saturation', -25)
-        setShaderFloat('gf', 'dist', 3)
-        setShaderFloat('gf', 'thr', 0.3)
-    end
+				setShaderFloat(object, 'dist', 3)
+    			setShaderFloat(object, 'thr', 0.3)
+			end
+		end
+	end
 end
 
-function onUpdatePost(e)
-    for i, v in pairs({'dad', 'gf', 'boyfriend'}) do
-        setShaderFloatArray(v, 'uFrameBounds', {
-            0, 0,
-            getProperty(v .. '._frame.frame.width'),
-            getProperty(v .. '._frame.frame.height')
-        })
-        setShaderFloat(v, 'angOffset', getProperty(v .. '.angle') * math.pi / 180)
-    end
-end
-
-function hex2rgb(hex)
-    return {
-        r = tonumber("0x" .. hex:sub(1, 2)) / 255,
-        g = tonumber("0x" .. hex:sub(3, 4)) / 255,
-        b = tonumber("0x" .. hex:sub(5, 6)) / 255
-    }
+function onUpdatePost(elapsed)
+	if shadersEnabled == true then
+		for i, object in ipairs({'boyfriend', 'dad', 'gf'}) do
+			setShaderFloatArray(object, 'uFrameBounds', {getProperty(object..'.frame.uv.x'), getProperty(object..'.frame.uv.y'), getProperty(object..'.frame.uv.width'), getProperty(object..'.frame.uv.height')})
+			setShaderFloat(object, 'angOffset', math.rad(getProperty(object..'.frame.angle')))
+		end
+	end
 end
